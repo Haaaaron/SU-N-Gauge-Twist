@@ -27,6 +27,7 @@
 \usepackage{cancel}
 \usepackage{bbm}
 \usepackage{algorithmic}
+\usepackage{pifont}
 %\usepackage{babel}
 \usepackage[en-GB]{datetime2}
 
@@ -57,7 +58,7 @@
 }}
 
 % if you want to quote someone special. You can comment the line, and nothing will be on the document.
-%\quoting{Bachelor's degrees make pretty good placemats if you get them laminated.}{Jeph Jacques} 
+\quoting{Come on baby let's do the twist}{Chubby Checker} 
 
 
 % OPTIONAL STEP: Set up properties and metadata for the pdf file that pdfLaTeX makes.
@@ -86,6 +87,8 @@
 \DeclareMathOperator{\Tr}{Tr}
 \DeclareMathOperator{\z}{\mathbf{z}}
 \newcommand{\id}{\mathbbm{1}}
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
 
 \begin{document}
 
@@ -113,11 +116,17 @@ something something SU(N)
 % to change the parameters. Removing the abstract and ToC commands will mess up stuff.
 \chapter{Introduction}
 
-Introduce the main concepts of the theory and the boundary condition that imposes the physics. Then introduce the tools and technology used to measure the surface and analyse the system including error analysis techniques. Monte Carlo sampling techniques, Jackknife, FS reweighting etc. Lastly talk about results found from the measurements
+It is well known that for $SU(3)$ pure gauge theory there exists a low temperature colour confining disordered phase and a high temperature colour non-confining ordered phase \cite{POLYAKOV1978477,PhysRevD.20.2610}. Let $Z(3)$ be the cyclic group of three elements. At low temperatures the phase of $SU(3)$ pure gauge theory is $Z(3)$-symmetric while at high temperatures the phase is $Z(3)$-breaking, thus at high temperatures the order of the phase aligns to one of the three $Z(3)$ group elements. It is of interest to consider the existence of systems where two of the phases are present at once as they might be significant in the cosmological quark - hadron phase transition \cite{FREI1989469}. 
 
-\chapter{Constructing SU(N) Gauge Theory on the Lattice} \label{ch:sun_gauge_theory}
+Like water and air, when two phases exist in a system at once there lies an interface between them which has a measurable surface tension. Similarly this is true for pure gauge theory when two phases are present at once. Kajantie, Kärkkäinen and Rummukainen \cite{twist} demonstrate a method to produce this interface using the twist operation which acts as a boundary condition on the four dimensional lattice. They also offer a method to compute the surface tension $\alpha$ of the formed interface. Studies for the order - order interface has already been produced for $SU(3)$ in \cite{twist}, thus we will generalize the method to $SU(4)$ for which there are two unique possible interfaces. 
 
-\section{Pure SU(3) Gauge Theory on the Lattice: Motivation and construction of the Gauge action}
+In this thesis we will begin from a preliminary introduction to pure $SU(N)$ gauge theory and how it is defined on the lattice. Then we will define the twist and demonstrate how it  forms an interface for which we will show how it's surface tension is measured. After this we will discuss the methods used in simulating the gauge field with Monte Carlo methods including the post processing and error analysis. Lastly we will discuss the results that we measure for pure $SU(4)$ gauge theory.
+
+For the results of $SU(4)$ we will compare the two unique interfaces and the ratio of their surface tension which we measure to be $\alpha_{z_1}/\alpha_{z_2}\approx 0.798 \iff \alpha_{z_2}/\alpha_{z_1} \approx 1.253$ at $\beta = 1.005 \beta_{c,nt}$. We will compare this result to literature \cite{DEFORCRAND2005647} where they measure the interface tension for $SU(4)$ with a different algorithm. Additionally we will discuss the volume dependence of the signal when measuring the interface tension, and offer an argument for the first order phase transition in the interface tension. Lastly we will analyse the errors of the measurements particularly at the highest lattice volumes of $\{44,44,64,6\}$.
+
+\chapter{Constructing SU(N) gauge theory on the lattice} \label{ch:sun_gauge_theory}
+
+\section{Pure SU(3) gauge theory on the lattice: motivation and construction of the gauge action}
 
 In this section we will follow closely the lecture notes of Christof Gattringer and Christian B. Lang \cite[ch.~2]{gattringer2009quantum}. To begin the understanding of gauge theories on the lattice, it is useful to start from a well known theory which is more or less grounded in reality. $SU(3)$ gauge theory, also known as Quantum Chromodynamics (QCD), is a theory which has been well established in the standard model of physics and is the fundamental theory for the strong interaction between quarks and gluons. This theory holds a substantial amount of mathematical structure, and complexities arise especially when the theory begins to describe the relationship of quark fields in the QCD action. Since we are only interested in pure $SU(N)$ gauge theory, meaning the aspect of the theory which mediates the interaction between the quark fields, we will keep our focus on the gluon fields.
 
@@ -125,9 +134,9 @@ The gluon fields, also known as the gauge fields can be described with the follo
 \begin{align}
     A_\mu(x)_{cd},
 \end{align}
-where the argument $x$ describes a location in space time while the Lorentz index $\mu = 1,2,3,4$ holds our direction in space time for our vector field. For each location $x$ and index $\mu$ the element $A_\mu(x)$ is represented with a traceless Hermitean $3\times 3$ matrix, this is an important note which we will discuss more later. Since we are interested in the Euclidian action the index $\mu$ is also Euclidian, meaning that the notion of covariant and contravariant indices are dismissed. We will discuss the reasoning for this when we approach the path integral. Lastly we have color indices tied to the gluons $c,d = 1,2,3$.
+where the argument $x$ describes a location in space time while the Lorentz index $\mu = 1,2,3,4$ holds our direction in space time for our vector field. For each location $x$ and index $\mu$ the element $A_\mu(x)$ is represented with a traceless Hermitean $3\times 3$ matrix, this is an important note which we will discuss more later. Since we are interested in the Euclidian action the index $\mu$ is also Euclidian, meaning that the notion of covariant and contravariant indices are dismissed. The Euclidian action stems from the imaginary time path integral formalism via a Wick rotation \cite{Rothe:1992nt}. The path integral will be introduced in chapter \ref{ch:measurement}. Lastly we have color indices tied to the gluons $c,d = 1,2,3$.
 
-As was stated before, our main focus is the gauge field, but since it's symmetries aren't completely decoupled from the Fermion fields, we need to direct our focus for a moment towards the full QCD action. Taking inspiration from electrodynamics we require similar invariance for the QCD action, where in the action is invariant under multiplication of fermion fields with an arbitrary phase factor which in turn implies a transformation for the gauge fields. Similarly in QCD we require invariance under local rotation of the color indicies and the consequential transformation of the gauge field. Let $\psi(x)$ be a fermion field, thus we require the action to be invariant under the following transformations \cite[p.~28]{gattringer2009quantum}:
+As was stated before, our main focus is the gauge field, but since it's symmetries aren't completely decoupled from the Fermion fields, we need to direct our focus for a moment towards the full QCD action. Taking inspiration from electrodynamics we require similar invariance for the QCD action, where the action is invariant under multiplication of fermion fields with an arbitrary phase factor which in turn implies a transformation for the gauge fields. Similarly in QCD we require invariance under local rotation of the color indicies and the consequential transformation of the gauge field. Let $\psi(x)$ be a fermion field, thus we require the action to be invariant under the following transformations \cite[p.~28]{gattringer2009quantum}:
 \begin{align}
     \psi(x) \rightarrow \psi'(x) &= \Omega(x)\psi(x) \\
     \Bar{\psi}(x) \rightarrow \Bar{\psi}'(x) &= \Bar{\psi}(x)\Omega^\dagger(x) \\
@@ -138,7 +147,7 @@ The elements $\Omega(x)$ which are responsible for rotating the color indices ar
     \det[\Omega(x)] &= 1 \\
     \Omega(x)^\dagger &= \Omega(x)^{-1}, \label{eq:2.6}
 \end{align}
-the latter definition tells us that the matrices are unitary. Both of these requirements are charachteristic definition of the special unitary group hence $\Omega \in SU(3)$. Some important characteristics of any group are that the identity element is required to exist in the set of group elements, the elements are closed under multiplication and that for each element there exists an inverse. Additionally $SU(3)$ is a non abelian group, meaning that the group elements do not commute $\Omega_x,\Omega_y \in SU(3) \Rightarrow [\Omega_1,\Omega_2]\neq \delta_{xy}$. With these rules in mind we can solve the gauge transformation implied by the fermionic action invariance:
+the latter definition tells us that the matrices are unitary. Both of these requirements are charachteristic definition of the special unitary group hence $\Omega \in SU(3)$. Some important characteristics of any group are that the identity element is required to exist in the set of group elements, the elements are closed under multiplication and that for each element there exists an inverse. Additionally $SU(3)$ is a non abelian group, meaning that the group elements do not commute $\Omega_x,\Omega_y \in SU(3) \Rightarrow [\Omega_x,\Omega_y]\neq 0$. With these rules in mind we can solve the gauge transformation implied by the fermionic action invariance:
 \begin{align}
     \hspace{36px}S[\psi(x),\Bar{\psi}(x),A_\mu(x)] = S[\psi'(x),\Bar{\psi}'(x),A'_\mu(x)]
 \end{align}
@@ -277,7 +286,7 @@ Now we have given the basic understanding and motivation of the QCD gauge action
 \end{align}
 where the inverse coupling constant is defined as $\beta=2N/g^2$. 
 
-\section{Polyakov loops: Order parameter and the centers of $SU(N)$}
+\section{Polyakov loops as an order parameter and the centers of $SU(N)$}
 
 We will yet again follow Gattringer and Lang \cite[ch. 3.3.5]{gattringer2009quantum}. The Polyakov loop \cite{POLYAKOV197582} is a similar object as the Wilson loop \cite[ch. 3.3.1]{gattringer2009quantum} but instead of creating a closed chain of links inside the boundary of the lattice we create a closed loop with the use of periodic boundary conditions in the temporal direction. Thus we make the temporal part of the loop as long as the temporal direction $N_4$ permits wrapping around and closing in on itself thus creating a closed loop. This loop is then chosen at any arbitrary location $\vec{x}$ in the spatial direction. The loop can be expressed as:
 \begin{align}
@@ -319,7 +328,7 @@ In contrast the center transformation for the Polyakov loop is not and invariant
 \end{align}
 this is a very interesting consequence and hints at the center symmetry of $SU(N)$. As stated before, at low temperatures the expectation value of the Polyakov loop is vanishing thus the effects of the center elements is vanishing as well. At high temperatures the Polyakov loop will then favor one of the three centers, but the action will stay ignorant to this ordering. This all leads me to the final point, the Polyakov loop acts as an order parameter both for confinement and deconfinement. And when in a symmetry braking phase it will also measure which of the three center elements the gauge field aligns towards. 
 
-\section{Phase transitions: disordered and ordered phases of SU(N) Gauge theory} \label{sec:phase_transition}
+\section{Phase transitions: disordered and ordered phases of SU(N) gauge theory} \label{sec:phase_transition}
 
 Now that we have introduced the Polyakov loop we can begin to discuss the phase transitions of the gauge field. In Lattice field theory often we study systems that exhibit  phase transitions with respect to temperature changes. We can take as a simple example the well studied and established Ising model. At low temperatures below the critical temperature $T < T_c$ the system is in a completely ordered phase where the net magnetization approaches one. When the temperature bypasses the critical point the system reaches a completely disordered phase where the net magnetization approaches zero. Both of these states are illustrated in figure \ref{fig:ising}. 
 
@@ -363,7 +372,7 @@ In similar fashion the pure $SU(N)$ gauge field also exhibits a phase transition
     \label{fig:polyakov}
 \end{figure*}
 
-The shifting of phases can also be seen in the gauge average action in figure $\ref{fig:su3phase}$. As $\beta$ increases a significant drop can be seen around $\beta = 5.9$ where the average action drops. Additionally each sample point has vanishing errors except around the phase transition, where the average action will fluctuate up and down, and it can't directly determine which phase the system is in. This is due to the first order nature of the phase transition. Being a first order phase transition the sample history indicates that the system is both in the ordered and disordered phases and will jump between them being indecisive of it's phase. The great increase in error is indicative of this. 
+The shifting of phases can also be seen in the gauge average action in figure $\ref{fig:su3phase}$. As $\beta$ increases a significant drop can be seen around $\beta = 5.9$ where the average action drops. Additionally each sample point has vanishing errors except around the phase transition, where the average action will fluctuate up and down, and it can't directly determine which phase the system is in. This is due to the first order nature of the phase transition \cite{Brown-first-order,FUKUGITA1990181}. Being a first order phase transition the sample history indicates that the system is both in the ordered and disordered phases and will jump between them being indecisive of it's phase. The great increase in error is indicative of this. 
 
 \begin{figure*}[htpb]
     \centering
@@ -372,10 +381,10 @@ The shifting of phases can also be seen in the gauge average action in figure $\
     \label{fig:su3phase}
 \end{figure*}
 
-\chapter{Introducing the Twist: Producing an Interface Between Two Ordered Phases on the Lattice}
+\chapter{Introducing the twist: producing an interface between two ordered phases on the lattice}
 
 
-\section{The twist and it's consequence}
+\section{The twist and it's consequence} \label{ch:twist_explanation}
 
 Once again we will begin our discussion from the Ising model as it exhibits similar behaviour to our focus of study, SU(N) gauge theory. We take the Ising model as it were, but in addition we introduce a boundary condition for our system. From our two dimensional lattice with dimensions $(N_1,N_2)$ we choose a one dimensional boundary. For convenience sake we choose the boundary $B = \{(N_1,x_2) |\hspace{3px}\forall i \in \{1,\cdots,N_2\} \}$. The points $B$ on the boundary see the magnetization of the neighbouring points in the $x_1$ direction as having an opposite sign value, thus it considers them in the opposite state. When we update with Metropolis-Hastings the local magnetization will be computed with an opposite sign for the point on the other side of the boundary if the chosen point to be updated happens to lie next to the boundary. We will call this effect on the boundary the twist. A similar condition has been done for the 2d7s Potts model in \cite{twist}, where the neighbouring point on the other side of the boundary is seen in the state $s_i - 1 \mod q$ where $q = |\{s_i\}|$ is the total number of states and $s_i$ is the current state for that lattice point. When we run the same system as in figure \ref{fig:ising} but with the newly imposed twist we get the behaviour illustrated in figure \ref{fig:ising_twist}. 
 \begin{figure*}[htpb]
@@ -475,11 +484,11 @@ This interface has been studied and measured in \cite{twist}. For $SU(4)$ there 
 if we draw comparisons to the analysis of $SU(3)$ the complex factors of the six $SU(4)$ center elements have two possible distances when choosing two elements:
 \begin{align}
     |\z_0 - \z_1| = |\z_0 - \z_3| =  |\z_1 - \z_2| = |\z_2 - \z_3| &= \sqrt{2} \\
-    |\z_0 - \z_3| = |\z_1 - \z_3| &= 2.
+    |\z_0 - \z_2| = |\z_1 - \z_3| &= 2.
 \end{align}
 From this we can conclude that there are two possible unique interface which can be formed in pure $SU(4)$ gauge theory. The focus of this thesis will be the measurement and study of these two interfaces.
 
-\section{Measuring the Surface Tension Produced by the Twist} \label{sec:twist_measure}
+\section{Measuring the surface tension produced by the twist} \label{sec:twist_measure}
 
 As was shown in the previous section, the formation of an o-o interface can be done with the added action of a twist. This interface is described by two ordered phases on the lattice which can be measrued by the Polyakov loop order parameter. As we have stated, the interface itself is uniquely described by it's tension and energy and not by the phases that it is defined by. To demonstrate this we would need a method to measure the interface tension. As shown by Kajantie, Kärkkäinen and Rummukainen \cite{twist}, the interface tension can be computed by measuring the difference between the free energy of the system with and without the twist. The free energy of the purge gauge field is given by:
 \begin{align}
@@ -495,8 +504,12 @@ As a measureable quantity one can express then with the pure gauge action:
 \end{align}
 Hence we can compute the interface tension by integrating \ref{eq:integrate} with respect to $\beta$:
 \begin{align*}
-   \alpha_{\text{o-o}}A &= F_{\text{twist}} - F_{\text{no-twist}} = \int d\beta \frac{1}{\beta}(\langle S_{\text{twist}}[U] - S_G[U]\rangle) \\
-   \Rightarrow \alpha_{\text{o-o}} &= \frac{1}{A}\int d\beta \frac{1}{\beta}\langle S_{\text{twist}}[U] - S_G[U]\rangle.
+   \alpha_{\text{o-o}}A &= F_{\text{twist}} - F_{\text{no-twist}} = T\int d\beta \frac{1}{\beta}(\langle S_{\text{twist}}[U] - S_G[U]\rangle) \\
+   \Rightarrow \frac{\alpha_{\text{o-o}}}{T} &= \frac{1}{A}\int_{\beta_0}^{\beta_1} d\beta \frac{1}{\beta}\langle S_{\text{twist}}[U] - S_G[U]\rangle,
+\end{align*}
+where $A=N_0N_1 a^2$ and $a=\frac{1}{N_t T}$ is the lattice spacing. We can then write:
+\begin{align*}
+    \frac{\alpha_{o-o}}{T^3} = \frac{N_t^2}{N_xN_y}\int_{\beta_0}^{\beta_1} d\beta \frac{1}{\beta}\langle S_{\text{twist}}[U] - S_G[U]\rangle.
 \end{align*}
 
 In practice this will be done through Lattice Monte Carlo methods which we will discuss in the upcoming chapter, but the general formulation will be the following:
@@ -505,7 +518,7 @@ In practice this will be done through Lattice Monte Carlo methods which we will 
     \item Compute action difference
     \item Integrate with respect to $\beta$
 \end{enumerate}
-Figure \ref{fig:simple_wilson} illustrates step 1, where the average action is plotted for both the twistless and twist ($z_1$) system. As can be seen in the figure, before the phase transition both systems act similarly, yet after the phase transition the systems part and it is evident that the system with the twist has a slightly higher average action than the system without the twist. This difference is what we want to obtain and integrate. Figure \ref{fig:simple_wilson_subtract} illustrates step 2, where the difference of the average action is plotted. It is evident that the errors increase due to the subtraction, which pose inaccuracies during integration. These errors will be mitigated in the upcoming chapter.
+Figure \ref{fig:simple_wilson} illustrates step 1, where the average action is plotted for both the twistless and twist ($z_1$) system. Note that when we measure the average action we are in fact measuring the average plaquette operator, hence the action is normalized with $6\cdot V$, where $V$ is the system volume. As can be seen in the figure, before the phase transition both systems act similarly, yet after the phase transition the systems part and it is evident that the system with the twist has a slightly higher average action than the system without the twist. This difference is what we want to obtain and integrate. Figure \ref{fig:simple_wilson_subtract} illustrates step 2, where the difference of the average action is plotted. It is evident that the errors increase due to the subtraction, which pose inaccuracies during integration. These errors will be mitigated in the upcoming chapter.
 \begin{figure*}[htpb]
     \centering
     \begin{subfigure}[t]{\textwidth}
@@ -521,9 +534,9 @@ Figure \ref{fig:simple_wilson} illustrates step 1, where the average action is p
 \end{figure*}
 Integrating the data depicted in the figure is not as straight forward due to the discontinuity of the first order phase transition. The discontinuity is exhibited in the errors around the phase transition points $\beta_{c-\text{twist}} \approx 5.09$ (This critical temperature is supported by literature \cite{twist}) for the twist system and $\beta_{c-\text{no-twist}} \approx 5.1$. For this reason one must sample significantly denser with respect to $\beta$ and longer simulations to obtain proper results around the critical temperatures. One can also utilize data analysis methods related to Monte Carlo sampling which we will discuss in the upcoming chapter.
 
-\chapter{Numerical simulations and measurement on the lattice}
+\chapter{Numerical simulations and measurement on the lattice} \label{ch:measurement}
 
-\section{Monte Carlo Methods}
+\section{Monte Carlo methods}
 
 In chapter \ref{ch:sun_gauge_theory} we familiarized $SU(N)$ gauge theory on the lattice through the lens of the gauge action, quite directly skipping the motivation of what the action is in context of Quantum Field Theory (QFT). The Feynman path integral formulation being the important mathematical object in QFT, and the whole basis for our theory, had no introduction and was briefly presented in section \ref{sec:twist_measure}. As it is the most important foundation for QFT one does not need to search intensely for a glossary on it as there are numerous textbooks which always begin from the path integral \cite{Creutz:1983njd, gattringer2009quantum, Rothe:1992nt}. Now let's reintroduce the pure gauge theory path integral and the expectation value of an observable $O$, defined discretely on the Lattice:
 \begin{align}
@@ -622,9 +635,9 @@ In addition to heat bath we also use overrelaxtion. Overrelaxation has the added
 \end{align}
 There are quite a few effective methods for overrelaxtion. In our case we use an implementation akin to the methods of Brown and Woch \cite{Brown}, where an overrelaxation is preformed on the $SU(2)$ subgroups, as was done with the heat bath method of Cabibbo and Marinari. As the overrelaxation algorithm is limited to a microcanonical enseble, a subspace of the phase space, it is by definition not ergodic. Since we want to sample the whole canonical ensemble, overrelaxation needs to be paired with another update scheme. For this reason our simulations use heat bath and overrelaxation in tandem. 
 
-\section{Post processing and Error Analysis}
+\section{Post processing and error analysis}
 
-And important observation in Monte Carlo sampling of the path integral is that when gathering numerous mounts of sample points for an observable $O_\beta$ at coupling $\beta$, one can imply information at $\beta'$ for an observable $O_{\beta'}$ when the two values $\beta$ and $\beta'$ are sufficiently close. This is a consequence of the fact that the two observables are not statistically uncorrelated and the method to obtain this adjacent observable is called reweighting. One can relate the canonical probability of a configuration $\phi$ ad temperature $\beta$ with probability $p_\beta(\phi)$ to its distribution at other temperatures $\beta'$:
+And important observation in Monte Carlo sampling of the path integral is that, when gathering numerous amounts of sample points for an observable $O_\beta$ at coupling $\beta$, one can imply information at $\beta'$ for an observable $O_{\beta'}$ when the two values $\beta$ and $\beta'$ are sufficiently close. This is a consequence of the fact that the two observables are not statistically uncorrelated. The method to obtain this adjacent observable is called reweighting. One can relate the canonical probability of a configuration $\phi$ at temperature $\beta$ with probability $p_\beta(\phi)$ to its distribution at other temperatures $\beta'$:
 \begin{align}
     p_{\beta'}(\phi) \propto e^{-\beta' E_\phi} = Ce^{-(\beta' - \beta)E_\phi} p_\beta(\phi)
 \end{align}
@@ -633,7 +646,7 @@ where $C$ is a constant of $\beta$ and $\beta'$. Now we can write the expectatio
     \langle O \rangle_{\beta'} \equiv \frac{1}{Z_\beta}\int d\phi O(\phi) p_{\beta'}(\phi) &=  \frac{C}{Z_\beta}\int d\phi O(\phi) e^{-(\beta' - \beta)E_\phi} p_\beta(\phi) \\
     &= \frac{Z_\beta}{Z_{\beta'}}C\langle O e^{-(\beta'-\beta)E_\phi}\rangle_\beta.
 \end{align}
-Now if we evaluate this relation at $O=\id$ we obtain the retio:
+Now if we evaluate this relation at $O=\id$ we obtain the ratio:
 \begin{align}
     \frac{Z_{\beta'}}{Z_\beta} = C\langle  e^{-(\beta'-\beta)E}\rangle_\beta,
 \end{align}
@@ -645,214 +658,299 @@ Thus we can extrapolate results for observables at sufficiently close couplings.
 \begin{align}
     \sigma^2_{\hat\theta} = \frac{M-1}{M}\sum_{m=1}^M(\theta_m - \hat\theta), \label{eq:error}
 \end{align}
-where $M$ is the total number of blocks, $\hat\theta$ is the mean of the full data set and $\theta_m$ is the mean of the respective block. This standard deviation applies to the difference of a set of jackknife blocks and the following integral. This is the precise reason we utilize jackknife blocks, since one can save time from computing error propagation. Assuming that the statistical sampling is done well then the error can be mitigated significantly. We then use the average of the computed blocks as our fit for the action. 
+where $M$ is the total number of blocks, $\hat\theta$ is the mean of the blocks, and $\theta_m$ is the mean of respective blocks. This standard deviation applies to the difference of a set of jackknife blocks and the following integral. This is the precise reason we utilize jackknife blocking, since one can save time in computing error propagation. Assuming that the statistical sampling is done well, the error can be mitigated significantly. We then use the average of the computed blocks as our fit for any given observable. 
 
-With the combined efforts of Ferrenberg-Swendsen reweighting and jackknife with blocking, we obtain a smooth fit for our action with the wanted error margins, which we can then use to compute the integral and surface tension. The results of this post processing can be seen in figure \ref{fig:FS-example}, when applied to the data in figures \ref{fig:simple_wilson} and \ref{fig:simple_wilson_subtract}.
+With the combined efforts of Ferrenberg-Swendsen reweighting and jackknife with blocking, we obtain a smooth fit for our action with the wanted error margins, which we then use to compute the integral and surface tension. The results of this post processing can be seen in figure \ref{fig:FS-example}, when applied to the data in figures \ref{fig:simple_wilson} and \ref{fig:simple_wilson_subtract}. As we can see the post processing results in very neat and smooth fits with well mitigated errors.
 \begin{figure*}[htpb]
     \centering
-    \begin{subfigure}[t]{\textwidth}
+    \begin{subfigure}[t]{0.65\textwidth}
         \centering
-        \includegraphics[width=0.75\textwidth]{final_plots/su3_fs_reweight/action.pdf}
+        \includegraphics[width=\textwidth]{final_plots/su3_fs_reweight/action.pdf}
         \caption{Average action}
         \label{fig:fs-reweight-action}
     \end{subfigure}
-    \begin{subfigure}[t]{\textwidth}
+    \begin{subfigure}[t]{0.65\textwidth}
         \centering  
-        \includegraphics[width=0.75\textwidth]{final_plots/su3_fs_reweight/difference.pdf}
+        \includegraphics[width=\textwidth]{final_plots/su3_fs_reweight/difference.pdf}
         \caption{Average action difference}
         \label{fig:fs-reweight-difference}
     \end{subfigure}
-    \begin{subfigure}[t]{\textwidth}
+    \begin{subfigure}[t]{0.65\textwidth}
         \centering
-        \includegraphics[width=0.75\textwidth]{final_plots/su3_fs_reweight/integral.pdf}
+        \includegraphics[width=\textwidth]{final_plots/su3_fs_reweight/integral.pdf}
         \caption{Integral of average action}
         \label{fig:fs-reweight-integral}
     \end{subfigure}
-    \caption{Post processed data of figures \ref{fig:simple_wilson} and \ref{fig:simple_wilson_subtract} with FS-reweighting and blocked (M=5) jackknife. Additionally the surface tension is multiplied by volume due to the fact that the plaquette measurements are normalized with volume during the simulation.}
+    \caption{Post processed data of figures \ref{fig:simple_wilson} and \ref{fig:simple_wilson_subtract} with FS-reweighting and blocked (M=5) jackknife. Additionally the surface tension is multiplied by $6\cdot V$ since the action is measured as the averague plaquette operator.}
     \label{fig:FS-example}
 \end{figure*}
-As we can see the post processing results in very neat and smooth fits with quite well mitigated errors. N 
 
-\chapter{Results}
+\chapter{Numerical results for measuring the interface tension}
 
-\section{Reproducing results for SU(3)}
+\section{Recreating results for $SU(3)$}
 
-\section{Results for SU(4)}
+As a typical sanity check we reproduce the results presented in literature \cite{twist}. In the paper the figures of interest are 6,7 and 8. These figures depict the three step process that we describe earlier in section \ref{sec:twist_measure} and illustrate in figure \ref{fig:FS-example}. These figures respectively depict the following: average plaquette operator, difference in action divided by the interface's surface area $A=N_x N_y$ and the integral of the difference in action. Notably when plotting the difference in action one can choose to plot either the difference in average plaquette operator or the quantity $\langle \Delta S\rangle / (N_x N_y)$ depending on which is more convenient for analysis. In the reference they choose to plot the latter. This choice does not change the result of the integral, but it is important to keep in mind. For this section we will plot $\langle \Delta S\rangle / (N_x N_y)$ in order to remain consistent with the source material.
 
-Our main focus is the study of $SU(4)$ and the interfaces it can produce. As we have stated earlier, the Lie Group of $SU(4)$ posesses in total four centers with which our interface can produce two unique configurations. This can be seen directly in the measurement of the Polyakov loop where the centers can either have a distance of $|z_0 - z_1| = \sqrt{2}$ or $|z_0 - z_2| = 2$. To see how the choice of twist coefficient effects the interface we simulate two configurations with twist $z_1$ and $z_2$ and compare it to non twist configuration with has effectively twist $z_0 = 1$. We then measured these systems for varying volumes to see how the interface tension scales at the continuum limit. Firstly looking at figures \ref{fig:4444646}
+We simulated the same lattice configuration $\{8,8,40,2\}$ for range $\beta \in [5.06,5.18]$ as in the paper. We perform 6000 updates that is comprised of one heat bath update and four overrelaxation updates for all values of $\beta$. In comparison, the paper perform $10000$ updates in the critical regions and 1000 updates in the non critical regions. The results are depicted in \ref{fig:su3-recreation}. As can be seen in the figures, the results follow quite exactly the produced results in the paper including similar errors in the critical region, with one notable exception being the slightly higher measured surface tension. Taking in to account the error bars for both our recreation and the papers results, the fitted curves lie perfectly within the respective errors which explains the slight disparity in the result for the integral. Additionally the limited amount of updates in the critical region for the recreated results also explains the higher errors and consequently differing result for the integral. In conclusion we can consider that our methods are aptly producing the same results for $SU(3)$ and can confidently be used for $SU(4)$.
+\begin{figure*}[htpb]
+    \centering
+    \begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=0.65\textwidth]{final_plots/su3_recreate/action.pdf}
+        \caption{Average plaquette operator}
+        \label{fig:recrete-action}
+    \end{subfigure}
+    \begin{subfigure}[t]{\textwidth}
+        \centering  
+        \includegraphics[width=0.65\textwidth]{final_plots/su3_recreate/action_diff.pdf}
+        \caption{Average action difference}
+        \label{fig:recrete-difference}
+    \end{subfigure}
+    \begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=0.65\textwidth]{final_plots/su3_recreate/action_diff_int.pdf}
+        \caption{Integral of average action}
+        \label{fig:recrete-integral}
+    \end{subfigure}
+    \caption{Recreation of average plaquette operator (a), average action difference (b) and integral of average action (c) as shown in figures 6,7,8 of the paper \cite{twist}.}
+    \label{fig:su3-recreation}
+\end{figure*}
+\section{Measuring the interface tension for $SU(4)$}
 
-\begin{figure}[htpb]
+Our main focus is the study of $SU(4)$ and the interfaces it can produce. As was discussed in chapter \ref{ch:twist_explanation} the Lie Group of $SU(4)$ possesses in total four centers with which our interface can produce two unique configurations. First, to see how the choice of the twist element $z_n$ coefficient effects the interface we simulate two configurations with twist $z_1$ and $z_2$ and compare it to the untiwsted lattice. Secondly, we then measure these systems for varying volumes to see how the interface tension scales at the continuum limit. Thirdly, we will investigate the shape of the graphs such as in \ref{fig:FS-example}, when the volume and specifically the $N_2$ dimension is increased. Lastly, we will discuss the errors produced by the data and their consequences.
+
+The data for $SU(4)$ is measured with the techniques described in chapter \ref{ch:measurement} using the HILA lattice simulation framework \cite{HILA}. Each simulation for a given $\beta$ is run on the Mahti supercomputer \cite{cscMahtiDocs} using one compute node with four A100 GPU's. Each run is a combination of 120000 update steps for which each update step is comprised of one heat bath update paired with four overrelaxation updates. The following volumes were measured:
+\begin{table}[h!]
+\centering
+\begin{tabular}{|l|l|l|l|}
+\hline
+Volume        & $z_0$ & $z_1$ & $z_2$ \\ \hline
+\{18,18,28,6\} & \cmark   & \cmark &   \xmark   \\ \hline
+\{24,24,36,6\} & \cmark  &  \cmark   &   \cmark   \\ \hline
+\{32,32,48,6\} & \cmark   &  \cmark   &  \xmark   \\ \hline
+\{44,44,64,6\} & \cmark   &  \cmark   &  \cmark    \\ \hline
+\end{tabular}
+\end{table}\\
+The choice of volume is such that for each dimension the next increase is around $33\%$ larger, rounded to an even integer, since our simulation software only supports even volumes. For the twist coefficient $z_2$ we only simulated with two volumes, since they are sufficient for comparison of the two possible interfaces.
+
+\subsection{The two possible interfaces and the comparison of their interface tension} \label{sec:interfaces}
+
+We simulate $SU(4)$ with twists $z_1$ and $z_2$, and volumes $\{24,24,36,6\}$ and $\{44,44,64,6\}$. In figure \ref{fig:actions} we see the average plaquette action plotted with both twisted and non twisted systems for both twist coefficients. The behaviour already established for $SU(3)$ in section \ref{sec:twist_measure} is immediately evident from the respective graphs. For example, we see that in all cases the twisted action sees it's phase transition at a higher $\beta$ compared to the non twisted action. Additionally the error for the non twisted action at the critical temperature $\beta_{c,nt}$ is higher than for the twisted one at $\beta_{c,t}$. This behavior indicates that the twist delays the phase transition. In other words, the twist prevents the system from switching phase, which is caused by the actively forming surface requiring energy to form. The added required energy then demands a higher temperature to perform the phase transition. Additionally the smaller error for the twisted phase transition is reflected in the speed of the phase transition. In all cases of volumes and twist coefficients the twisted phase transition has a smaller rate of change than the non twisted one. A possible explanation might be that the system does not need to compete with the natural phase transition to the ordered phase, which has a high autocorrelation time, but instead it only needs to compete with the formation of the interface. This will be discussed in upcoming sections. The twisted phase transition can be considered "slower" in multiple fashions, both happening at a higher $\beta$ and being a less steep discontinuous jump.
+\begin{figure}[htb]
     \centering
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{final_plots/24_24_36_highlight/action_0-1.pdf}
-        \caption{}
+        \includegraphics[width=\textwidth]{final_plots/action_volume_comparison/action_24_24_36.pdf}
     \end{subfigure}%
-    ~ 
+    ~
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{final_plots/24_24_36_highlight/action_0-2.pdf}
-        \caption{}
-    \end{subfigure}
+        \includegraphics[width=\textwidth]{final_plots/action_volume_comparison/action_24_24_36_0-2.pdf}
+    \end{subfigure}\vspace{1.5cm}
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{final_plots/24_24_36_highlight/action_diff_0-1.pdf}
-        \caption{}
+        \includegraphics[width=\textwidth]{final_plots/action_volume_comparison/action_44_44_64.pdf}
     \end{subfigure}%
-    ~ 
+    ~
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{final_plots/24_24_36_highlight/action_diff_0-2.pdf}
-        \caption{}
+        \includegraphics[width=\textwidth]{final_plots/action_volume_comparison/aciton_44_44_64_0-2.pdf}
     \end{subfigure}
-    \begin{subfigure}[t]{0.5\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{final_plots/24_24_36_highlight/action_diff_int_0-1.pdf}
-        \caption{}
-    \end{subfigure}%
-    ~ 
-    \begin{subfigure}[t]{0.5\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{final_plots/24_24_36_highlight/action_diff_int_0-2.pdf}
-        \caption{}
-    \end{subfigure}
-    \label{fig:2424366}
-    \caption{Lattice of size $\{24,24,36,6\}$. Left column shows measured interface tension with system that has twist coefficient $z_1 = i$, while right column shows measured interface tension of a system with twist coefficient $z_2 = -1$. Dotted lines represent independent bins produced by the jackknife method which have been reweighed respectively with FS method.} 
+    \caption{Lattices of size $\{24,24,36,6\}$ (top) and $\{44,44,64,6\}$ (bottom). Average plaquette operator of system with twist coefficient $z_1 = i$ (left) and twist coefficient $z_2 = 1$ (right)} 
+    \label{fig:actions}
 \end{figure}
 
-\begin{figure}[htpb]
+\iffalse
+\begin{figure}[ht]
     \centering
-    \begin{subfigure}[t]{0.5\textwidth}
+    \begin{subfigure}[t]{0.8\textwidth}
         \centering
         \includegraphics[width=\textwidth]{final_plots/44_44_64/action_0-1.pdf}
-    \end{subfigure}%
-    ~ 
-    \begin{subfigure}[t]{0.5\textwidth}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.8\textwidth}
         \centering
         \includegraphics[width=\textwidth]{final_plots/44_44_64/action_0-2.pdf}
     \end{subfigure}
-    \begin{subfigure}[t]{0.5\textwidth}
+    \caption{Lattice of size $\{44,44,64,6\}$. Average plaquette action if system with twist coefficient $z_1 = i$ (top) and twist coefficient $z_2 = 1$ (bottom)} 
+    \label{fig:4444646_action}
+\end{figure}
+\fi
+
+We measure the phase transition point to be the point where the derivative of the difference in action is highest.
+\iffalse
+, as depicted for the action of twist $z_2$ with volume $\{44,44,64,6\}$ in graph \ref{fig:derivative}. 
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[t]{\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{final_plots/44_44_64/action_diff_0-1.pdf}
-    \end{subfigure}%
-    ~ 
-    \begin{subfigure}[t]{0.5\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{final_plots/44_44_64/action_diff_0-2.pdf}
+        \includegraphics[width=\textwidth]{final_plots/misc/derivative.pdf}
     \end{subfigure}
-    \begin{subfigure}[t]{0.5\textwidth}
+    \caption{Derivative of action difference} 
+    \label{fig:derivative}
+\end{figure}
+\fi
+With this we measure the following phase transition points depicted in table \ref{table:critical_temperature}.
+\begin{table}[htb]
+\centering
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+      & $\{18,18,28,6\}$       & $\{24,24,36,6\}$       & $\{32,32,48,6\}$       & $\{44,44,64,6\}$       \\ \hline
+$z_0$ & $\beta_c\approx10.787$ & $\beta_c\approx10.789$ & $\beta_c\approx10.787$ & $\beta_c\approx10.787$ \\ \hline
+$z_1$ & $\beta_c\approx10.814$ & $\beta_c\approx10.805$ & $\beta_c\approx10.802$ & $\beta_c\approx10.797$ \\ \hline
+$z_2$ &                        & $\beta_c\approx10.812$ &                        & $\beta_c\approx10.799$ \\ \hline
+\end{tabular}
+\caption{Critical temperatures for phase transitions of non twisted and twisted lattices with volumes $\{24,24,36,6\}$ and $\{44,44,64,6\}$}
+\label{table:critical_temperature}
+\end{table}
+The critical coupling for the non twisted lattice is supported by the findings in \cite{Ohta_2000}, where they measure $\beta \approx 10.79$ for a lattice of $\{20,20,20,6\}$. These critical temperatures indicate for both volumes that the phase transition for twist $z_2$ happens later than for twist $z_1$. With similar argument of a delayed phase transition requiring more energy to form, we can conclude that with twist coefficient $z_2$ the formed surface requires more energy, and consequently has a higher surface tension. This claim is also supported by inspecting the average action difference and the surface tension, as depicted in graphs \ref{fig:2424366_twist_comparison} and \ref{fig:4444646_twist_comparison} for volumes $\{24,24,36,6\}$ and $\{44,44,64,6\}$ respectively. As can be seen for both volumes, the difference in action is slightly larger for the $z_2$ twisted lattice, and consequently the interface tension is measured to be higher. A conclusion we can draw is, that the order parameter with the higher interface tension possesses a larger distance in the center elements that the system will order to. Evidently $|\z_0 - \z_2| > |\z_0 - \z_1|$ for the center elements on the unit circle indicates that the $z_2$ twisted lattice will have a higher interface tension.
+\begin{figure}[htb]
+    \centering
+    \begin{subfigure}[t]{\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{final_plots/44_44_64/action_diff_int_0-1.pdf}
-    \end{subfigure}%
-    ~ 
-    \begin{subfigure}[t]{0.5\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{final_plots/44_44_64/action_diff_int_0-2.pdf}
+        \includegraphics[width=0.8\textwidth]{final_plots/24_24_36_highlight/action_diff.pdf}
     \end{subfigure}
-    \caption{Lattice of size $\{44,44,64,6\}$. Left column shows measured interface tension with system that has twist coefficient $z_1 = i$, while right column shows measured interface tension of a system with twist coefficient $z_2 = -1$. Dotted lines represent independent bins produced by the jackknife method which have been reweighed respectively with FS method.} 
-    \label{fig:4444646}
+    \begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=0.8\textwidth]{final_plots/24_24_36_highlight/action_diff_int.pdf}
+    \end{subfigure}
+    \caption{Lattice of size $\{24,24,36,6\}$. Left column shows measured interface tension with system that has twist coefficient $z_1 = i$, while right column shows measured interface tension of a system with twist coefficient $z_2 = -1$.} 
+    \label{fig:2424366_twist_comparison}
+\end{figure}
+\begin{figure}[htb]
+    \centering
+    \begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=0.8\textwidth]{final_plots/44_44_64/action_diff.pdf}
+    \end{subfigure}
+    \begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=0.8\textwidth]{final_plots/44_44_64/action_diff_int.pdf}
+    \end{subfigure}
+    \caption{Lattice of size $\{44,44,64,6\}$. Left column shows measured interface tension with system that has twist coefficient $z_1 = i$, while right column shows measured interface tension of a system with twist coefficient $z_2 = -1$.} 
+    \label{fig:4444646_twist_comparison}
 \end{figure}
 
-\begin{figure*}[htpb]
+Lastly let us consider the ratio of the $z_1$ interface to the $z_2$ interface. As can be seen in figure \ref{fig:tension_ratio}, the ratio of interface tension $\alpha_{z_1}/\alpha_{z_2}$ begins to approach the same magnitude after the first phase transition point $\beta_{c,nt}$ (critical inverse coupling for non twisted lattice), after which the ratio decreases and approaches a value of around $0.8$. The error is quite high during the phase transitions, as one can expect from previous discussion, yet it quickly stabilises. After the phase transitions, as the system stabilises, we notice that the interface tension for the $z_1$ twist is around $80\%$ of the magnitude of the $z_2$ interface. In other words the $z_2$ interface is on average $25\%$ larger than the $z_1$ interface. This is an interesting notion, since already at a comparatively small volume does this behaviour arise. The interface tension at the smaller volume ($\{24,24,36,6\}$) is noticeably smaller than that of the larger volume ($\{44,44,64,6\}$) for both twists as can be seen in figures \ref{fig:2424366_twist_comparison} and \ref{fig:4444646_twist_comparison}, yet the tensions grow at a similar rate as the volume is increased. This is taking into account that the shapes of the signals differ quite a bit, yet the effects dependent on lattice size do not affect the ratios of the two possible interfaces tensions. 
+
+At $\beta = 1.005 \beta_{c,nt}$ we measure $\alpha_{z_1}/\alpha_{z_2}\approx 0.798 \iff \alpha_{z_2}/\alpha_{z_1} \approx 1.253$. In the literature \cite{DEFORCRAND2005647} the ratio of interface tensions for $SU(4)$ for a lattice of $\{24,24,24,5\}$ at $T = 1.2 T_c$ has been measured to be $\alpha_{z_2}/\alpha_{z_1}\approx 1.310$ and continues to increase for higher values of $T$. Looking at the graphs \ref{fig:tension_ratio} it is evident that the ratio $\alpha_{z_2}/\alpha_{z_1}$ continues to increase as $\beta$ increase which is directly expected from the literature. Additionally, considering that in the previous paragraph we concluded that the ratio of interface tension decrease at a similar rate for both volumes, we expect the behavior shown in the literature to be applicable to our systems. 
+\begin{figure}[htb]
+    \centering
+    \begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=0.8\textwidth]{final_plots/misc/ratio_24_24_36_6.pdf}
+    \end{subfigure}
+    \begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=0.8\textwidth]{final_plots/misc/ratio_44_44_64_6.pdf}
+    \end{subfigure}
+    \caption{Ratio of surface tension ($\alpha_{z_1}/\alpha_{z_2}$) of $z_1$ twist and $z_2$ twist for both $\{24,24,36,6\}$ (top) and $\{44,44,64,6\}$ (bottom) volumes.} 
+    \label{fig:tension_ratio}
+\end{figure}
+
+\subsection{Volume dependent scaling of the interface tension}
+
+Let us consider how the average action, their difference and surface tension scale as we increase the volume. As was stated in the beginning of this chapter, the volumes which this values were sampled from increase at a rate of around $33\%$ in the spacial dimensions $\{x_0,x_1,x_2\}$. Looking at the average action in figure \ref{fig:action_volume}, we notice the expected first order phase transition \cite{Batrouni,GAVAI2002480} becomes sharper and more discontinuous. For all volumes the second phase transision for the twist $z_1$ happens slower and has a lower error than the non twisted lattice, as was discussed in the previous chapter. Notably, the twisted action begins to resemble the phase transition of the non twisted action as the volume increase. At the two largest volumes $\{32,32,48,6\}$ and $\{44,44,64,6\}$, there is not much disparity between the two phase transitions. As the two phase transition approach a similar shape, the latter twisted phase transition persists in having a smaller error. 
+\begin{figure*}[!htb]
     \centering
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{final_plots/18_18_28/action_0-1.pdf}
+        \includegraphics[width=\textwidth]{final_plots/action_volume_comparison/action_18_18_28.pdf}
         \caption{Lattice size $\{18,18,28,6\}$}
     \end{subfigure}%
     ~ 
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{final_plots/24_24_36_highlight/action_0-2.pdf}
+        \includegraphics[width=\textwidth]{final_plots/action_volume_comparison/action_24_24_36.pdf}
         \caption{Lattice size $\{24,24,36,6\}$}
-    \end{subfigure}
+    \end{subfigure}\vspace{1.5cm}
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{final_plots/32_32_48/action_0-1.pdf}
+        \includegraphics[width=\textwidth]{final_plots/action_volume_comparison/action_32_32_48.pdf}
         \caption{Lattice size $\{32,32,48,6\}$}
     \end{subfigure}%
     ~ 
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{final_plots/44_44_64/action_0-1.pdf}
+        \includegraphics[width=\textwidth]{final_plots/action_volume_comparison/action_44_44_64.pdf}
         \caption{Lattice size $\{44,44,64,6\}$}
     \end{subfigure}
-    \caption{Comparison of action with twist coefficient $z_1=i$ as Lattice volume increases at a rate of approximately $33$\%. Dotted lines represent independent bins produced by the jackknife method which have been reweighed respectively with FS method.} 
+    \caption{Comparison of average plaquette operator with twist coefficient $z_1=i$ as lattice volume increases at a rate of approximately $33$\%.} 
+    \label{fig:action_volume}
 \end{figure*}
 
-\begin{figure*}[htpb]
-    \centering
-    \begin{subfigure}[t]{0.5\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{final_plots/18_18_28/action_diff_0-1.pdf}
-        \caption{Lattice size $\{18,18,28,6\}$}
-    \end{subfigure}%
-    ~ 
-    \begin{subfigure}[t]{0.5\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{final_plots/24_24_36_highlight/action_diff_0-1.pdf}
-        \caption{Lattice size $\{24,24,36,6\}$}
-    \end{subfigure}
-    \begin{subfigure}[t]{0.5\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{final_plots/32_32_48/action_diff_0-1.pdf}
-        \caption{Lattice size $\{32,32,48,6\}$}
-    \end{subfigure}%
-    ~ 
-    \begin{subfigure}[t]{0.5\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{final_plots/44_44_64/action_diff_0-1.pdf}
-        \caption{Lattice size $\{44,44,64,6\}$}
-    \end{subfigure}
-    \caption{Comparison of action difference with twist coefficient $z_1=i$ as Lattice volume increases at a rate of approximately $33$\%. Dotted lines represent independent bins produced by the jackknife method which have been reweighed respectively with FS method.} 
-\end{figure*}
+The volume dependent behavior becomes more evident as we inspect the shape of the difference in action divide by the interface surface $N_0N_1$ depicted in figure \ref{fig:difference_all}. As the volume increase, the previously discussed phase transitions become sharper, which is evident in the sharp jumps in the difference of action. We notice that the first phase transition for all volumes happen approximately at the same critical inverse coupling, as is evident in the values depicted in table \ref{table:critical_temperature}. In contrast, the critical inverse coupling for the twisted lattice decreases gradually as the volume is increased and the height of the signal increase. The critical inverse coupling decreasing suggests that the phase transition of the twisted lattice approaches the same inverse coupling as the non twisted lattice. The narrower the signal becomes, illustrated by the value $\Delta \beta = \beta_{c,t} - \beta_{c,nt}$ the sharper the formation of the interface tension becomes. Looking at the surface tension shown in figure \ref{fig:integral_all} we notice how the slope becomes more discontinuous as the volume increases and approaches a first order phase transition. This is dependent on the value $\Delta \beta$, which indicates how quickly the surface forms as the inverse coupling increases. We will discuss the width and height of the action difference signal and $\Delta \beta$ in the next section.
 
-\begin{figure*}[htpb]
+Lastly inspecting figure $\ref{fig:integral_all}$, we notice that the volume dependence of the surface tension is not linear. A limiting factor is reached at the two largest volumes, as their slopes meet past the value of around $\beta \approx 10.80$. The largest volume has a notably smaller surface tension with respect to inverse coupling, compared to the second largest volume. Nonetheless the error band of the second largest volume is quite wide and the largest volume lies well within this margin of error. This is suggestive of the continuum limit behavior as the surface tension does not grow any further compared to the growth of the two smallest volumes. We will discuss the statistical error in the last section of this chapter.
+\begin{figure*}[!htb]
     \centering
-    \begin{subfigure}[t]{0.5\textwidth}
+        \begin{subfigure}[t]{\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{final_plots/18_18_28/actiion_diff_int_0-1.pdf}
-        \caption{Lattice size $\{18,18,28,6\}$}
-    \end{subfigure}%
-    ~ 
-    \begin{subfigure}[t]{0.5\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{final_plots/24_24_36_highlight/action_diff_int_0-1.pdf}
-        \caption{Lattice size $\{24,24,36,6\}$}
+        \includegraphics[width=\textwidth]{final_plots/misc/difference_divide.pdf}
+        \caption{}
+        \label{fig:difference_all}
     \end{subfigure}
-    \begin{subfigure}[t]{0.5\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{final_plots/32_32_48/action_diff_int.pdf}
-        \caption{Lattice size $\{32,32,48,6\}$}
-    \end{subfigure}%
-    ~ 
-    \begin{subfigure}[t]{0.5\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{final_plots/44_44_64/action_diff_int_0-1.pdf}
-        \caption{Lattice size $\{44,44,64,6\}$}
-    \end{subfigure}
-    \caption{Comparison of action difference integral with twist coefficient $z_1=i$ as Lattice volume increases at a rate of approximately $33$\%. Dotted lines represent independent bins produced by the jackknife method which have been reweighed respectively with FS method.} 
-\end{figure*}
-
-\begin{figure*}[htpb]
-    \centering
-    \begin{subfigure}[t]{0.5\textwidth}
+    \begin{subfigure}[t]{\textwidth}
         \centering
         \includegraphics[width=\textwidth]{final_plots/misc/integral.pdf}
         \caption{}
-    \end{subfigure}%
-    ~ 
-    \begin{subfigure}[t]{0.5\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{final_plots/misc/inverse_area.pdf}
-        \caption{}
+        \label{fig:integral_all}
     \end{subfigure}
+    \caption{Average action difference divided by $N_0\cdot N_1$ and surface tension for each increased volume of twisted lattice with twist coefficient $z_1=i$.}
 \end{figure*}
 
+\subsection{Volume dependence of $\Delta \beta$ and $\Delta h$}
+
+With the discussion had in section \ref{sec:interfaces} we considered the effect of the twist as displacing the expected phase transition to a larger inverse coupling $\beta_{c,nt} \rightarrow\beta_{c,t}$. This was explained by the newly formed interface requiring energy. If we consider the spacial volume having it's phase transition being displaced by an amount $\Delta \beta = \beta_{c,t}-\beta_{c,nt}$ and a constant factor $c_\alpha$, we can consider this being proportional to the free energy requiring to form the interface $F_s = \alpha A$. Thus we can express:
+\begin{align}
+    V(\Delta\beta) c_\alpha &= \alpha A \\
+    \Rightarrow \Delta \beta &= \frac{\alpha}{c_\alpha}\frac{A}{V} \\
+    &= \frac{\alpha}{c_\alpha}\frac{N_0 N_1 }{N_0 N_1 N_2} \\
+    &= \frac{\alpha}{c_\alpha}\frac{1}{N_2},
+\end{align}
+as $\alpha/c_\alpha$ is simply a real parameter we can conclude that:
+\begin{align}
+    \Delta \beta \propto \frac{1}{N_2}.
+\end{align}
+This behavior is witnessed in figures \ref{fig:action_volume} and \ref{fig:difference_all}. In the former, the critical inverse coupling of the twisted lattice approaches the non twisted one as $N_2$ is increased. For the latter the signal of the action difference becomes narrower as $N_2$ is increased. 
+
+This discussion leads us to inspect $\Delta h$. Let us define $\Delta h$ as being the maximal height reached for the difference in average action divide by the surface area of the interface $\langle S_t - S_{nt} \rangle / (N_0N_1)$ depicted in figure \ref{fig:difference_all}. As $N_2$ increase we notice that while the width $\Delta \beta$ decreases the height of $\Delta h$ increase at a similar rate. The integrable area between $\Delta \beta$ seems to approach a constant value as the continuum limit is reached. This is directly visible in the interface tension \ref{fig:integral_all} as the highest two volumes approach the same curves. This would suggest that since $\Delta \beta \propto 1/N_2$ then $\Delta h \propto N_2$, which would indicate that as the continuum limit is taken the value of $\langle S_t - S_{nt} \rangle / (N_0N_1)$ at the critical inverse coupling of the non twisted lattice $\beta_{c,nt}$ approach a Dirac delta function.
+
+As the continuum limit is taken we can conclude that the first order phase transition of the twisted lattice approaches the critical inverse coupling of the non twisted lattice. This indicates that the surface tension is measured to be zero until the critical inverse coupling is reached at $\beta_{c,t} \approx \beta_{c,nt}$, where then a discontinuous jump is seen after which the surface tension sees a monotonous linear increase.
+
+\subsection{Error analysis of the phase transition regions}
+
+As can be seen for volume $\{44,44,64,6\}$ and twist coefficient, the error for the inverse coupling values contained in $\Delta \beta$ are quite high. This is suggestive of a very high autocorrelation time in this region. Even with a high sample size of $120000$, the resulting statistics are not enough to extract a sufficiently smooth signal. Interestingly, the high autocorrelation is not only present at the phase transition point of $\beta_{c,t} \approx 10.797$, but also before it in the $\Delta \beta$ region as depicted in the time series for this region \ref{fig:twist_time_series_1}. This is suggestive of the fact that active formation of the surface happens already before the critical inverse coupling. This would also explain why the twisted phase transition is more gradual compared to the non twisted one. 
+
+Such high errors in the $\Delta \beta$ region were not present for the $z_2$ twisted lattice, as presented in figure \ref{fig:4444646_twist_comparison}. This is particularly visible in the comparison of the difference in actions, as the $z_2$ twisted lattice has vanishingly small errors compared to the $z_1$ twisted lattice. On the contrary, the $z_2$ twisted lattice has higher errors in other regions outside of $\Delta \beta$. One might consider if this is a consequence of the choice in twist or simply statistical luck. One might consider if it's a combination of the two. 
+
+Comparing to the example graphs produced for $SU(3)$ in \ref{fig:FS-example}, one might expect that similarly smooth graphs could be produced for $SU(4)$. The errors of all sampled volumes and configurations vary quite a bit, and quite high errors can be seen in for example the $\{32,32,48,6\}$ volume in figures \ref{fig:difference_all} and \ref{fig:integral_all}. What raises questions is, how is the error more drastic for the smaller volumes compared to the largest sampled volume. With closer inspection of the time series in the critical regions of $[\beta_{c,nt}-\delta\beta,\beta_{c,t} + \delta \beta]$ for twist $z_1$ in figure \ref{fig:twist_time_series_1} and twist $z_2$ in figure \ref{fig:twist_time_series_2}, we notice something peculiar. There is noticeable freezing in the time series, starting at the $\beta_{c,nt}$ and leading all the way up to $\beta_{c,t}$. Before and after these critical $\beta$ values for respective twists the freezing is not present. The freezing is more drastic for $z_1$ twisted lattice compared to the $z_2$ twisted lattice. This would explain why the $z_1$ twisted lattice has noticeably higher errors, while the $z_2$ twisted lattice has noticeably none. We can conclude that the $z_1$ data in fact displays to us more directly the inconsistency of the data and suggests that the autocorrelation lengths are drastically larger than $120000$ samples. Additionally, since $z_2$ has more concise samples, it leads us astray thinking that the data is reliably sampling the phase space.
+
+What is unique about the $z_2$ twist compared to $z_1$ is that it requires higher energy and a longer $\Delta \beta$ to construct the interface. This fact is also reflected in the freezing being more gradual and the unreliable error margins being smaller. Thus we can conclude that the disparity in errors is both statistical luck and the choice of twist. Additionally with these insights we can conclude that unlike the non twisted lattice, the phase transition for the twisted lattice requires a significantly higher region than that of the non twisted lattice, for which the phase transition being first order happens instantly at $\beta_{c,nt}$ \cite{Batrouni,GAVAI2002480}. Our earlier discussions on the phase transition beginning already at the $\beta_{c,nt}$ point for the twisted lattice is also supported by the behaviour of action in the $\Delta \beta$ region. We thus have stronger evidence to believe that the phase transition for the non twisted lattice begins already at $\beta_{c,nt}$ and concludes at $\beta_{c,t}$. Nonetheless, as we demonstrated in the previous section, as the continuum limit is taken the phase transition of the twisted lattice still approaches the same value of the non twisted lattice.
+
+\begin{figure*}[!htb]
+    \centering
+    \includegraphics[width=\textwidth]{final_plots/misc/twist_1_autocorrelation.pdf}
+    \caption{Time series of Monte Carlo samples for $\{44,44,64,6\}$ volume and $z_1$ twisted lattice for $\Delta \beta$ region. Also including $\beta$ values slightly before and after $\Delta \beta$.}
+    \label{fig:twist_time_series_1}
+\end{figure*}
+\begin{figure*}[!htb]
+    \centering
+    \includegraphics[width=\textwidth]{final_plots/misc/twist_2_autocorrelation.pdf}
+    \caption{Time series of Monte Carlo samples for $\{44,44,64,6\}$ volume and $z_2$ twisted lattice for $\Delta \beta$ region. Also including $\beta$ values slightly before and after $\Delta \beta$.}
+    \label{fig:twist_time_series_2}
+\end{figure*}
 
 \chapter{Conclusions}
 
-\section{Further Studies}
+In this thesis we study the formation of an interface between two ordered phases for $SU(4)$ pure gauge theory formed by a twist in the lattice. First we measure the two possible unique interfaces formed by the twist and compare their interface tensions $\alpha_{o-o}$ as the inverse coupling increase. Then we look at how the interface tension scales as the lattice volume is increased. After this we inspect the volume dependent behavior of the width ($\Delta \beta$) and height ($\Delta h$) of the difference in action between the twisted and non twisted lattices $\langle S_t - S_{nt} \rangle / (N_0N_1)$. Lastly we analyse the errors and time series of the twisted lattices particularly at the highest measured volume $\{44,44,64,6\}$.
+
+When measuring the interface tensions of the $z_1$ and $z_2$ twisted lattices we notice that at both volumes $\{24,24,36,6\}$ and $\{44,44,64,6\}$ the ratio of the interface tensions $\alpha_{z_1}/\alpha_{z_2}$ approaches similar behavior. At $\beta = 1.005 \beta_{c,nt}$ we measure $\alpha_{z_1}/\alpha_{z_2}\approx 0.798 \iff \alpha_{z_2}/\alpha_{z_1} \approx 1.253$. Thus right after the critical inverse coupling the $z_2$ twisted lattice interface tension is around $25\%$ larger than the interface tension of the $z_1$ twisted lattice. This behaviour was supported by the minimal errors for the graphs in figure $\ref{fig:tension_ratio}$ after the phase transitions. These results correspond with the literature \cite{DEFORCRAND2005647}, where they measure $\alpha_{z_2}/\alpha_{z_1} \approx 1.310$ at $T=1.2T_c$ for a lattice of size $\{24,24,24,5\}$. Since we expect $\alpha_{z_2}/\alpha_{z_1}$ to grow based on the trend in the graph $\ref{fig:tension_ratio}$ the values measured in the literature are applicable.  For later studies it would be beneficial to inspect how the ration $\alpha_{z_1}/\alpha_{z_2}$ behaves at higher inverse coupling $\beta > 10.85$.
+
+For the volume dependent scaling of the interface tensions measured for the $z_1$ twisted lattice, we notice how the critical inverse coupling for the twisted lattice got increasingly smaller while the critical inverse coupling for the non twisted lattice stayed the same. This is evident when looking at the shapes of the difference in action divided by $N_0N_1$ in figure \ref{fig:difference_all}, since the critical region $\Delta \beta$ got narrower. At the same time the height of the signal got increasingly higher. This trend directly links to the witnessed continuum limit behaviour of the surface tension. A discontinuous jump for the interface tension becomes more prominent at the critical inverse coupling of the non twisted lattice $\beta_{c,nt}$ and the measured interface tension follows similar curves for the highest two volumes. We conclude that while the interface tension measured for the second highest volume was higher than that of the highest volume, since both curves lie within the respective error margins of each other this is indicative of the continuum limit behavior of the interface tension.
+
+When inspecting the volume dependent behaviour of the interface tension we notice the volume dependence of the width $\Delta \beta$ and height $\Delta h$ for the difference in action divide by $N_0N_1$ illustrated in figure  \ref{fig:difference_all}. Thus we propose how the width and height of the signal depends on the length of the spacial dimension $x_2$ perpendicular to the interface. We notice that $\Delta \beta \propto 1/N_2$ and $\Delta h \propto N_2$ which directly indicates that the shape of the signal approaches a delta function. In conclusion the interface tension sees a discontinuous first order phase transition at $\Delta \beta_{c,nt}$ when $\lim N_2 \rightarrow \infty$. 
+
+Lastly we inspect the misleading errors of the highest volumes for both the $z_1$ and $z_2$ twisted lattices. The notable errors in graph \ref{fig:4444646_twist_comparison} for the $z_1$ twisted lattice for the difference in average plaquette operator in the $\Delta \beta$ region indicated to us that the autocorrelation time for this region is high. When inspecting the time series of twist $z_1$ in figure \ref{fig:twist_time_series_1} \ref{fig} and twist $z_2$ in figure \ref{fig:twist_time_series_2} we notice freezing in the region $\Delta \beta$. This is reflective of the high errors of the $z_1$ twisted lattice in the $\Delta \beta$ region. Additionally the non existent errors for $z_2$ in the $\Delta \beta$ region indicates that the freezing is even worse. In conclusion we need to implement better sampling techniques such as multicanonical Monte Carlo \cite{Berg_1992} to confidently sample the critical regions where critical freezing is present. 
 
 
 
